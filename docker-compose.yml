@@ -1,0 +1,19 @@
+version: '3.1'  # if no version is specificed then v1 is assumed. Recommend v2 minimum
+
+services:  # containers. same as docker run
+  tests: # a friendly name. this is also DNS name inside network
+    image: david3214/testing:tests # Optional if you use build:
+    command: npm run test:unit
+    network_mode: host
+    expose:
+      - '8080'
+    ports:
+      - '8079:8080'
+    environment:
+      VUE_APP_TENANT_ID: 1006
+      
+
+# networks:
+#   default:
+#     external:
+#       name: platform_default

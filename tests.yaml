@@ -1,0 +1,41 @@
+---
+resources:
+# - name: repo
+#   type: git
+#   source:
+#     uri: git@github.com:hexly/naativ-teacher-lounge.git
+#     branch: Cypress
+#     private_key: ((git-private-key))
+
+- name: test-image
+  type: docker-image
+  source:
+    repository: david3214/testing
+    tag: tests
+    uemail: ((DOCKER_MAIL))
+    username: ((DOCKER_USER))
+    password: ((DOCKER_PASS))
+
+jobs:
+- name: publish
+  public: true
+  plan:
+  - get: test-image
+  # - put: test-image
+    # params:
+    #   build: repo
+  - task: run
+    image: test-image
+    params:
+      VUE_APP_TENANT_ID: 1004
+      VUE_APP_BASE_URL: https://platform.dev.hexly.cloud
+      TEST_ADMIN_USERNAME: JBstormy13@gmail.com
+      TEST_PASSWORD: Password1
+      TEST_MEMBER_USERNAME: JBstormy13@gmail.com
+      IN_LOCAL: false
+    config:
+      platform: linux
+      run:
+        path: sh
+        args: [/usr/src/app/tests/concourse/test.sh]
+        

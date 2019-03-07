@@ -1,0 +1,13 @@
+const express = require('express')
+
+const PORT = 8080
+const HOST = '0.0.0.0'
+
+const app = express()
+app.get('/', (req, res)=>{
+  res.send('hello world\n')
+})
+
+app.listen(PORT, HOST)
+
+console.log(`Now listning on port ${PORT}`)

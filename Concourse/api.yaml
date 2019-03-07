@@ -1,0 +1,145 @@
+---
+resource_types:
+
+- name: kubernetes
+  type: docker-image
+  source:
+    repository: zlabjp/kubernetes-resource
+    tag: "1.9"
+
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
+resources:
+
+- name: release
+  type: s3
+  source:
+    bucket: concourse.api.storage
+    versioned_file: staging
+    access_key_id: ((aws-key))
+    secret_access_key: ((aws-secret))
+
+- name: api-repo
+  type: git
+  source:
+    uri: ((api-gitlab-access))
+    branch: staging
+
+- name: ops-repo
+  type: git
+  source:
+    uri: ((ops-gitlab-access))
+    branch: master
+
+- name: k8s
+  type: kubernetes
+  source:
+    namespace: staging
+    server: https://api.sdf1.k8s.api.storage
+    token: ((k8s-token))
+    certificate_authority: ((k8s-certificate-authority))
+
+- name: api-ecr
+  type: docker-image
+  source:
+    repository: 380246911330.dkr.ecr.us-east-1.amazonaws.com/gds
+
+- name: util
+  type: docker-image
+  source:
+    repository: ubuntu
+
+- name: slack
+  type: slack-notification
+  source:
+    url: https://hooks.slack.com/services/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
+
+jobs:
+  - name: build
+    build_logs_to_retain: 45
+    plan:
+      - aggregate:
+        - get: api-repo
+          trigger: true
+        - get: util
+        - put: slack
+          params:
+            text: |
+              Staging build $BUILD_NAME for GDS started
+              https://concourse.api.storage/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME
+      
+      - task: tag
+        image: util
+        config:
+          platform: linux
+          inputs:
+            - name: api-repo
+          outputs:
+            - name: tags
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                export BUILD=$(head -n 1 api-repo/.git/ref | cut -c 1-7)
+                echo $BUILD > tags/ref
+      
+      - put: build
+        resource: api-ecr
+        params:
+          build: api-repo
+          tag: tags/ref
+          tag_as_latest: true
+      
+      - put: release
+        params:
+          file: tags/ref
+    
+      - put: slack
+        params:
+          text_file: tags/ref
+          text: |
+            Staging Build $BUILD_NAME complete! Image: $TEXT_FILE_CONTENT
+
+  - name: deploy
+    build_logs_to_retain: 45
+    plan:
+      - aggregate:
+        - get: ops-repo
+        - get: util
+        - get: release
+          passed: ['build']
+          trigger: true
+      
+      - task: create config
+        image: util
+        config:
+          platform: linux
+          inputs:
+            - name: ops-repo
+            - name: release
+          outputs:
+            - name: deploy
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                export BUILD=$(cat release/staging)
+                cp ops-repo/k8s/api/staging/* deploy/
+                sed -i -e "s/--ref--/${BUILD}/g" deploy/deployment.yaml
+      
+      - put: k8s
+        params:
+          kubectl: apply -f deploy
+          wait_until_ready_selector: app=gds
+      
+      - put: slack
+        params:
+          text_file: release/staging
+          text: |
+            Staging Build live in k8s ($TEXT_FILE_CONTENT)
