@@ -14,6 +14,11 @@ function init(bundle, parent, options = {}) {
   r360.renderToSurface(
     r360.createRoot('firstSite', { /* initial props */ }),
     r360.getDefaultSurface()
+	);
+	
+	r360.renderToSurface(
+    r360.createRoot('MainPanel', { /* initial props */ }),
+    r360.getDefaultSurface()
   );
 
   // r360.renderToLocation(

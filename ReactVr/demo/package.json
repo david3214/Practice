@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@martinpham/react-360-keyboard-camera-controller": "^1.0.8"
+  }
+}

@@ -17,7 +17,7 @@ import Earth from './earth'
 export default class MainPanel extends React.Component {
   state = {
     count: 0,
-    image: [ 'background.jpg', 'StreetBig.png', 'southLooking.png'],
+    image: [ 'background.jpg'],// 'StreetBig.png', 'southLooking.png'],
     curIndex: 0,
     earth:{
       rotateY: 0,
@@ -54,7 +54,8 @@ export default class MainPanel extends React.Component {
       await this.setState({curIndex: 0})
     else
       await this.setState({curIndex: this.state.curIndex + 1})
-    Environment.setBackgroundImage(asset(this.state.image[this.state.curIndex]))
+		Environment.setBackgroundImage(asset(this.state.image[this.state.curIndex]))
+		// Environment.setBackgroundImage(asset(`backgroundPhotos/${myImageVariable}`))
   }
   _clearBackground = ()=>{
     Environment.clearBackground()

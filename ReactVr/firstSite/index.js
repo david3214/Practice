@@ -17,7 +17,6 @@ export default class firstSite extends React.Component {
   render() {
     return (
       <View>
-        <MainPanel />
         {/* <Earth transform={[
             {rotateY: 0},
             {rotateZ: 0},
@@ -32,6 +31,6 @@ export default class firstSite extends React.Component {
   }
 };
 
-// AppRegistry.registerComponent('Earth', ()=> Earth)
+AppRegistry.registerComponent('MainPanel', ()=> MainPanel)
 AppRegistry.registerComponent('firstSite', () => firstSite)
 // AppRegistry.registerComponent('TestModel', () => TestModel)
